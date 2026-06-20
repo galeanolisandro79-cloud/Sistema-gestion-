@@ -10,6 +10,8 @@ ingresando los datos por teclado. No hay una demo fija — cada
 ejecución depende de lo que el usuario decida hacer.
 
 
+
+
 ==================================================
    SISTEMA DE GESTIÓN DE TURNOS - CLÍNICA
 ==================================================
