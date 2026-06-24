@@ -26,3 +26,16 @@ Menú interactivo
 1) esta_vencida(): Una TareaSimple queda marcada como vencida si pasó su fecha límite; una TareaRecurrente, en cambio, nunca queda "vencida": se reprograma automáticamente para la próxima fecha.
 2) obtener_resumen(): cada subclase de Tarea arma su propia descripción de texto.
 3) comparar(): cada ComparadorTareas define un criterio de orden distinto (prioridad vs. fecha de vencimiento).
+
+##Relaciones entre objetos
+
+-Composición: GestorDeTareas contiene y es responsable del ciclo de vida de sus Tarea — si se elimina una tarea del gestor, deja de existir en el sistema.
+-Agregación: Tarea referencia a una Categoria, pero la categoría existe de forma independiente y puede ser compartida por varias tareas a la vez (el gestor las administra en un diccionario propio).
+-Dependencia: Tarea usa los enumerados Prioridad y EstadoTarea para representar su estado interno.
+
+
+##Patrones de diseño aplicados
+
+-Singleton (GestorDeTareas): garantiza una única instancia global que centraliza todas las tareas y categorías del sistema. Se implementa sobreescribiendo __new__(), y se expone además a través de obtener_instancia().
+-Strategy (ComparadorTareas, ComparadorPorPrioridad, ComparadorPorFechaVencimiento): GestorDeTareas delega el criterio de orden de las tareas en un objeto ComparadorTareas intercambiable en tiempo de ejecución (establecer_comparador()), sin necesidad de modificar el gestor para agregar un nuevo criterio (principio abierto/cerrado).
+
