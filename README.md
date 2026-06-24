@@ -1,2 +1,2 @@
-ay dios mio
+print("oh hell noooo")
 
