@@ -1,26 +1,3 @@
-"""
-Sistema de gestión de tareas personales
-TPI - Programación Orientada a Objetos
-
-Conceptos aplicados:
-  - Encapsulamiento: atributos privados expuestos solo via @property
-  - Abstracción: Tarea y ComparadorTareas son clases abstractas (ABC)
-  - Herencia: TareaSimple y TareaRecurrente heredan de Tarea
-  - Polimorfismo: esta_vencida(), obtener_resumen() y comparar()
-    se comportan distinto según la subclase que recibe el mensaje
-
-Relaciones entre objetos:
-  - Composición: GestorDeTareas contiene y es responsable de sus Tareas
-  - Agregación: Tarea referencia a Categoria, que existe de forma independiente
-
-Patrones de diseño:
-  - Singleton: GestorDeTareas tiene una única instancia global
-  - Strategy: ComparadorTareas permite cambiar el criterio de orden
-    en tiempo de ejecución sin modificar GestorDeTareas
-
-Para ejecutar: python3 gestortareas.py
-"""
-
 import json
 import os
 import functools
