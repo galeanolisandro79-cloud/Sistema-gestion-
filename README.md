@@ -6,8 +6,8 @@ Aplicación de consola en Python para crear, organizar y dar seguimiento a tarea
 
 #Desde el menú interactivo se puede:
 
-1) Agregar una tarea simple (fecha de vencimiento fija).
-2) Agregar una tarea recurrente (se reprograma sola cada N días).
+1) Agregar una tarea simple.
+2) Agregar una tarea recurrente.
 3) Listar todas las tareas.
 4) Listar solo las pendientes (no vencidas ni completadas).
 5) Listar las vencidas.
@@ -30,7 +30,7 @@ Aplicación de consola en Python para crear, organizar y dar seguimiento a tarea
 
 -Prioridad/EstadoTarea: Enumeraciones (Baja/Media/Alta y Pendiente/En progreso/Completada).
 
--ComparadorTareasClase abstracta que define la interfaz de comparación (patrón Strategy).
+-ComparadorTareas: Clase abstracta que define la interfaz de comparación (patrón Strategy).
 
 -ComparadorPorPrioridad/ComparadorPorFechaVencimiento: Estrategias concretas de orden, intercambiables en tiempo de ejecución.
 
@@ -39,7 +39,7 @@ Aplicación de consola en Python para crear, organizar y dar seguimiento a tarea
 
 ---Conceptos de POO aplicados---
 
--Encapsulamiento: todos los atributos son privados (_atributo) y se exponen únicamente a través de @property.
+-Encapsulamiento: Todos los atributos son privados (_atributo) y se exponen únicamente a través de @property.
 
 -Abstracción: Tarea y ComparadorTareas son clases abstractas (ABC) que no se instancian directamente.
 
@@ -58,9 +58,9 @@ Aplicación de consola en Python para crear, organizar y dar seguimiento a tarea
 ---Patrones de diseño---
 
 
--Singleton (GestorDeTareas): garantiza una única instancia global que centraliza el estado de la aplicación.
+-Singleton (GestorDeTareas): Garantiza una única instancia global que centraliza el estado de la aplicación.
 
--Strategy (ComparadorTareas): permite cambiar el criterio de orden de las tareas en tiempo de ejecución sin modificar el código de GestorDeTareas (principio abierto/cerrado).
+-Strategy (ComparadorTareas): Permite cambiar el criterio de orden de las tareas en tiempo de ejecución sin modificar el código de GestorDeTareas (principio abierto/cerrado).
 
 
 ---Decoradores de Python---
