@@ -1,4 +1,4 @@
----Gestor de Tareas Personales---
+---Sistema de Gestion de Tareas Personales---
 
 Aplicación de consola en Python para crear, organizar y dar seguimiento a tareas personales, con persistencia en un archivo JSON.
 
