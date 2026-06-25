@@ -1,24 +1,49 @@
-import json 
-import os 
-import time 
-from abc import ABC, abstracmethod 
+"""
+Sistema de gestión de tareas personales
+TPI - Programación Orientada a Objetos
+
+Conceptos aplicados:
+  - Encapsulamiento: atributos privados expuestos solo via @property
+  - Abstracción: Tarea y ComparadorTareas son clases abstractas (ABC)
+  - Herencia: TareaSimple y TareaRecurrente heredan de Tarea
+  - Polimorfismo: esta_vencida(), obtener_resumen() y comparar()
+    se comportan distinto según la subclase que recibe el mensaje
+
+Relaciones entre objetos:
+  - Composición: GestorDeTareas contiene y es responsable de sus Tareas
+  - Agregación: Tarea referencia a Categoria, que existe de forma independiente
+
+Patrones de diseño:
+  - Singleton: GestorDeTareas tiene una única instancia global
+  - Strategy: ComparadorTareas permite cambiar el criterio de orden
+    en tiempo de ejecución sin modificar GestorDeTareas
+
+Para ejecutar: python3 gestortareas.py
+"""
+
+import json
+import os
+import functools
+import time
+from abc import ABC, abstractmethod
 from datetime import date, datetime, timedelta
-from enum import Enum 
-from functools import cmp_to_key 
+from enum import Enum
+from functools import cmp_to_key
 from typing import Optional
 
-ARCHIVOS_DATOS= "tareas.json"
+ARCHIVO_DATOS = "tareas.json"
 
-#==================================================================================
+
+# =============================================================================
 # COLORES Y ESTILOS ANSI
-#==================================================================================
+# =============================================================================
 
 class Color:
     RESET   = "\033[0m"
     BOLD    = "\033[1m"
     DIM     = "\033[2m"
 
-    # TEXTO
+    # Texto
     NEGRO   = "\033[30m"
     ROJO    = "\033[31m"
     VERDE   = "\033[32m"
@@ -27,28 +52,30 @@ class Color:
     MAGENTA = "\033[35m"
     BLANCO  = "\033[37m"
 
-    # FONDO
+    # Fondo
     BG_ROJO    = "\033[41m"
     BG_VERDE   = "\033[42m"
     BG_AMARILLO= "\033[43m"
     BG_AZUL    = "\033[44m"
     BG_MAGENTA = "\033[45m"
 
+
 def c(texto: str, *estilos: str) -> str:
     """Envuelve texto con estilos ANSI y resetea al final."""
     return "".join(estilos) + texto + Color.RESET
 
-#==================================================================================
-#DECORADORES
-#==================================================================================
 
-def encabezado(titulo: str, ancho: int =50):
- """Decorador que imprime un encabezado antes de ejectuar la función."""
- def decorador(func):
-  @functools.wraps(func)
-  def wrapper (*args, **kwargs):
-   linea = "=" * ancho
-   print(f"\n{c(linea, Color.ROJO)}")
+# =============================================================================
+# DECORADORES DE CONSOLA
+# =============================================================================
+
+def encabezado(titulo: str, ancho: int = 50):
+    """Decorador que imprime un encabezado antes de ejecutar la función."""
+    def decorador(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            linea = "═" * ancho
+            print(f"\n{c(linea, Color.ROJO)}")
             print(c(f"  {titulo.upper()}", Color.BOLD, Color.ROJO))
             print(f"{c(linea, Color.ROJO)}")
             return func(*args, **kwargs)
@@ -57,17 +84,17 @@ def encabezado(titulo: str, ancho: int =50):
 
 
 def confirmacion_guardado(func):
- """Decorador que muestra un mensaje de guardado exitoso tras la acción."""
-@functools.wraps(func) 
-def wrapper (*args, **kwargs):
+    """Decorador que muestra un mensaje de guardado exitoso tras la acción."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
         resultado = func(*args, **kwargs)
-        print(c("  ✔  Cambios guardados.", Color.DIM, Color.VERDE))
+        print(c("Cambios guardados.", Color.DIM, Color.VERDE))
         return resultado
     return wrapper
 
 
 def separador(func):
- """Decorador que imprime una línea separadora al final de la función."""
+    """Decorador que imprime una línea separadora al final de la función."""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         resultado = func(*args, **kwargs)
@@ -99,16 +126,17 @@ def medir_tiempo(func):
         return resultado
     return wrapper
 
-#==================================================================================
+
+# =============================================================================
 # ENUMERACIONES
-#==================================================================================
+# =============================================================================
 
 class Prioridad(Enum):
- BAJA = 1
-MEDIA = 2
-ALTA = 3
+    BAJA = 1
+    MEDIA = 2
+    ALTA = 3
 
-def __str__(self) -> str:
+    def __str__(self) -> str:
         return self.name.capitalize()
 
     def color(self) -> str:
@@ -126,11 +154,34 @@ def __str__(self) -> str:
         }[self]
 
 
+class EstadoTarea(Enum):
+    PENDIENTE   = "Pendiente"
+    EN_PROGRESO = "En progreso"
+    COMPLETADA  = "Completada"
+
+    def __str__(self) -> str:
+        return self.value.capitalize()
+
+    def color(self) -> str:
+        return {
+            EstadoTarea.PENDIENTE:   Color.AMARILLO,
+            EstadoTarea.EN_PROGRESO: Color.ROJO,
+            EstadoTarea.COMPLETADA:  Color.VERDE,
+        }[self]
+
+    def icono(self) -> str:
+        return {
+            EstadoTarea.PENDIENTE:   "",
+            EstadoTarea.EN_PROGRESO: "",
+            EstadoTarea.COMPLETADA:  "",
+        }[self]
+
+
 # =============================================================================
 # CATEGORIA
 # =============================================================================
 
-class Categoria: 
+class Categoria:
     # Mapeo de nombre de color → código ANSI
     _ANSI = {
         "azul":    Color.AZUL,
@@ -488,14 +539,14 @@ def pedir_fecha(mensaje: str) -> date:
         try:
             return datetime.strptime(texto, "%Y-%m-%d").date()
         except ValueError:
-            print(c("  ✖  Formato inválido. Usá AAAA-MM-DD (ej: 2026-07-01).", Color.ROJO))
+            print(c("Formato inválido. Usá AAAA-MM-DD (ej: 2026-07-01).", Color.ROJO))
 
 
 def pedir_prioridad() -> Prioridad:
     print(c("  Prioridad:", Color.BOLD))
-    print(f"    {c('1', Color.VERDE)} Baja   {c('2', Color.AMARILLO)} Media   {c('3', Color.ROJO)} Alta")
+    print(f"    {c('1)', Color.VERDE)} Baja   {c('2)', Color.AMARILLO)} Media   {c('3)', Color.ROJO)} Alta")
     opcion = input(c("  Elegí una opción [2]: ", Color.MAGENTA)).strip() or "2"
-    return {"1": Prioridad.BAJA, "2": Prioridad.MEDIA, "3": Prioridad.ALTA}.get(
+    return {"1)": Prioridad.BAJA, "2)": Prioridad.MEDIA, "3)": Prioridad.ALTA}.get(
         opcion, Prioridad.MEDIA
     )
 
@@ -508,12 +559,12 @@ def pedir_id(mensaje: str) -> int:
         print(c("Ingresá un número de ID válido.", Color.AZUL))
 
 
-@encabezado("Nueva tarea simple")
+@encabezado("Nueva tarea")
 @validar_titulo
 def agregar_tarea_simple(gestor: GestorDeTareas) -> None:
-    titulo = input(c("  Título: ", Color.ROJO)).strip()
+    titulo = input(c("  Título: ", Color.AZUL)).strip()
     while not titulo:
-        print(c("  ✖  El título no puede estar vacío.", Color.ROJO))
+        print(c(" El título no puede estar vacío.", Color.ROJO))
         titulo = input(c("  Título: ", Color.ROJO)).strip()
     fecha       = pedir_fecha("Fecha de vencimiento (AAAA-MM-DD): ")
     prioridad   = pedir_prioridad()
@@ -522,15 +573,15 @@ def agregar_tarea_simple(gestor: GestorDeTareas) -> None:
     notas       = input(c("  Notas (opcional): ", Color.AZUL)).strip()
     tarea       = TareaSimple(titulo, fecha, prioridad, categoria, notas)
     gestor.agregar_tarea(tarea)
-    print(c(f"\n  ✔  Tarea creada:", Color.VERDE))
+    print(c(f"\n Tarea creada:", Color.VERDE))
     print(tarea)
 
 
 @encabezado("Nueva tarea recurrente")
 def agregar_tarea_recurrente(gestor: GestorDeTareas) -> None:
-    titulo = input(c("  Título: ", Color.ROJO)).strip()
+    titulo = input(c("  Título: ", Color.AZUL)).strip()
     while not titulo:
-        print(c("  ✖  El título no puede estar vacío.", Color.ROJO))
+        print(c(" El título no puede estar vacío.", Color.ROJO))
         titulo = input(c("  Título: ", Color.ROJO)).strip()
     fecha       = pedir_fecha("Próxima fecha (AAAA-MM-DD): ")
     frec_txt    = input(c("  Frecuencia en días [7]: ", Color.ROJO)).strip() or "7"
@@ -540,7 +591,7 @@ def agregar_tarea_recurrente(gestor: GestorDeTareas) -> None:
     categoria   = gestor.obtener_o_crear_categoria(nombre_cat) if nombre_cat else None
     tarea       = TareaRecurrente(titulo, fecha, frecuencia, prioridad, categoria)
     gestor.agregar_tarea(tarea)
-    print(c(f"\n  ✔  Tarea creada:", Color.VERDE))
+    print(c(f"\n Tarea creada:", Color.VERDE))
     print(tarea)
 
 
@@ -548,7 +599,7 @@ def agregar_tarea_recurrente(gestor: GestorDeTareas) -> None:
 @separador
 def listar(tareas: list) -> None:
     if not tareas:
-        print(c("  (no hay tareas para mostrar)", Color.DIM))
+        print(c("  (No hay tareas para mostrar)", Color.DIM))
         return
     for tarea in tareas:
         print(tarea)
@@ -557,26 +608,23 @@ def listar(tareas: list) -> None:
 @encabezado("Criterio de orden")
 def cambiar_criterio(gestor: GestorDeTareas) -> None:
     print(f"  {c('1', Color.BOLD)} Por prioridad   {c('2', Color.BOLD)} Por fecha de vencimiento")
-    opcion = input(c("  Elegí una opción: ", Color.ROJO)).strip()
+    opcion = input(c(" Elegí una opción: ", Color.ROJO)).strip()
     if opcion == "2":
         gestor.establecer_comparador(ComparadorPorFechaVencimiento())
-        print(c("  ✔  Orden actualizado: por fecha de vencimiento.", Color.VERDE))
+        print(c("Orden actualizado: por fecha de vencimiento.", Color.VERDE))
     else:
         gestor.establecer_comparador(ComparadorPorPrioridad())
-        print(c("  ✔  Orden actualizado: por prioridad.", Color.VERDE))
+        print(c("Orden actualizado: por prioridad.", Color.VERDE))
 
 
 def cargar_datos_ejemplo(gestor: GestorDeTareas) -> None:
     trabajo  = gestor.obtener_o_crear_categoria("Trabajo",  "azul")
     personal = gestor.obtener_o_crear_categoria("Personal", "verde")
     gestor.agregar_tarea(
-        TareaSimple("Entregar informe mensual",    date(2026, 6, 25), Prioridad.ALTA,  trabajo)
+        TareaSimple("Entregar informe mensual", date(2026, 6, 25), Prioridad.ALTA, trabajo)
     )
     gestor.agregar_tarea(
-        TareaSimple("Comprar regalo de cumpleaños",date(2026, 6, 21), Prioridad.MEDIA, personal)
-    )
-    gestor.agregar_tarea(
-        TareaRecurrente("Backup de la base de datos", date(2026, 6, 22), 7, Prioridad.ALTA, trabajo)
+        TareaSimple("Comprar regalo de cumpleaños", date(2026, 6, 21), Prioridad.MEDIA, personal)
     )
     gestor.agregar_tarea(
         TareaSimple("Renovar el carnet", date(2026, 5, 1), Prioridad.BAJA, personal)
@@ -611,7 +659,6 @@ def mostrar_menu() -> None:
     print(c("║" + "─" * ancho + "║", Color.ROJO))
     for num, desc in opciones:
         linea = f"  {c(num, Color.BOLD, Color.AZUL)}) {desc}"
-        # ljust no funciona bien con códigos ANSI; compensamos
         padding = ancho - len(f"  {num}) {desc}")
         print(f"{borde}{linea}{' ' * padding}{borde}")
     print(fondo)
@@ -630,14 +677,14 @@ def main() -> None:
     gestor = GestorDeTareas.obtener_instancia()
 
     if gestor.cargar():
-        print(c(f"\n  ✔  Tareas cargadas desde '{ARCHIVO_DATOS}'.", Color.VERDE))
+        print(c(f"\n Tareas cargadas desde '{ARCHIVO_DATOS}'.", Color.VERDE))
     else:
         cargar_datos_ejemplo(gestor)
-        print(c("\n  ℹ  No había datos guardados: se cargaron tareas de ejemplo.", Color.AMARILLO))
+        print(c("\n No había datos guardados: se cargaron tareas de ejemplo.", Color.AMARILLO))
 
     while True:
         mostrar_menu()
-        opcion = input(c("\n  Elegí una opción: ", Color.BOLD, Color.AZUL)).strip()
+        opcion = input(c("\n Elegí una opción: ", Color.BOLD, Color.AZUL)).strip()
 
         if opcion == "1":
             agregar_tarea_simple(gestor)
@@ -657,15 +704,15 @@ def main() -> None:
             if tarea:
                 tarea.marcar_completada()
                 _guardar(gestor)
-                print(c("  ✔  Tarea marcada como completada.", Color.VERDE))
+                print(c("Tarea marcada como completada.", Color.VERDE))
             else:
-                print(c("  ✖  No se encontró esa tarea.", Color.ROJO))
+                print(c("No se encontró esa tarea.", Color.ROJO))
         elif opcion == "7":
             if gestor.eliminar_tarea(pedir_id("ID de la tarea a eliminar: ")):
                 _guardar(gestor)
-                print(c("  ✔  Tarea eliminada.", Color.VERDE))
+                print(c("Tarea eliminada.", Color.VERDE))
             else:
-                print(c("  ✖  No se encontró esa tarea.", Color.ROJO))
+                print(c("No se encontró esa tarea.", Color.ROJO))
         elif opcion == "8":
             cambiar_criterio(gestor)
             _guardar(gestor)
@@ -674,11 +721,8 @@ def main() -> None:
             print(c("\n  ¡Hasta la próxima!\n", Color.BOLD, Color.ROJO))
             break
         else:
-            print(c("  ✖  Opción inválida.", Color.ROJO))
+            print(c("Opción inválida.", Color.ROJO))
 
 
 if __name__ == "__main__":
     main()
-
-
-
