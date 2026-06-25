@@ -576,12 +576,11 @@ def listar(tareas: list) -> None:
 
 
 # -----------------------------------------------------------------------------
-# NUEVO: Ver detalle completo de una tarea (incluyendo notas/cuerpo)
+# DETALLE---------------------------------------------------------
 # -----------------------------------------------------------------------------
 
 @encabezado("Detalle de tarea")
 def ver_detalle_tarea(gestor: GestorDeTareas) -> None:
-    # Primero mostramos el listado para que el usuario vea los IDs disponibles
     tareas = gestor.listar_tareas()
     if not tareas:
         print(c("  (No hay tareas cargadas)", Color.DIM))
@@ -716,7 +715,7 @@ def mostrar_menu() -> None:
         ("3",  "Listar todas las tareas"),
         ("4",  "Listar tareas pendientes"),
         ("5",  "Listar tareas vencidas"),
-        ("6",  "Ver detalle / notas de una tarea"),   # ← NUEVA OPCIÓN
+        ("6",  "Ver detalle / notas de una tarea"),   
         ("7",  "Marcar tarea como completada"),
         ("8",  "Eliminar tarea"),
         ("9",  "Cambiar criterio de orden"),
@@ -769,7 +768,7 @@ def main() -> None:
         elif opcion == "5":
             listar(gestor.listar_vencidas())
             _guardar(gestor)
-        elif opcion == "6":                          # ← NUEVA OPCIÓN
+        elif opcion == "6":                          
             ver_detalle_tarea(gestor)
         elif opcion == "7":
             tarea = gestor.buscar_tarea(pedir_id("ID de la tarea a completar: "))
