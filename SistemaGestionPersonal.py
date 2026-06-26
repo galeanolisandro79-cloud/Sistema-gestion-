@@ -634,7 +634,7 @@ def ver_detalle_tarea(gestor: GestorDeTareas) -> None:
 
     # Fecha de vencimiento / próxima
     etiq_fecha = "Próxima fecha:" if isinstance(tarea, TareaRecurrente) else "Vence:"
-    vencida_tag = c("  ⚠ VENCIDA", Color.BOLD, Color.BG_MAGENTA, Color.BLANCO) if tarea.esta_vencida() else ""
+    vencida_tag = c("VENCIDA", Color.BOLD, Color.BG_MAGENTA, Color.BLANCO) if tarea.esta_vencida() else ""
     fila_dato(etiq_fecha, c(str(tarea.fecha_vencimiento), Color.ROJO) + vencida_tag)
 
     # Frecuencia (solo recurrentes)
