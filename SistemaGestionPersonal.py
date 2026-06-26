@@ -12,9 +12,7 @@ from typing import Optional
 ARCHIVO_DATOS = "tareas.json"
 
 
-# =============================================================================
 # COLORES Y ESTILOS ANSI
-# =============================================================================
 
 class Color:
     RESET   = "\033[0m"
@@ -47,9 +45,7 @@ def len_visible(texto: str) -> int:
     return len(_ANSI_RE.sub('', texto))
 
 
-# =============================================================================
 # DECORADORES DE CONSOLA
-# =============================================================================
 
 def encabezado(titulo: str, ancho: int = 50):
     def decorador(func):
@@ -101,10 +97,7 @@ def medir_tiempo(func):
     return wrapper
 
 
-# =============================================================================
 # ENUMERACIONES
-# =============================================================================
-
 class Prioridad(Enum):
     BAJA = 1
     MEDIA = 2
@@ -151,9 +144,7 @@ class EstadoTarea(Enum):
         }[self]
 
 
-# =============================================================================
 # CATEGORIA
-# =============================================================================
 
 class Categoria:
     _ANSI = {
@@ -339,9 +330,7 @@ class TareaRecurrente(Tarea):
         )
 
 
-# =============================================================================
 # PATRON STRATEGY: ComparadorTareas
-# =============================================================================
 
 class ComparadorTareas(ABC):
     @abstractmethod
@@ -366,9 +355,7 @@ class ComparadorPorFechaVencimiento(ComparadorTareas):
         return 0
 
 
-# =============================================================================
 # SERIALIZACION
-# =============================================================================
 
 def _tarea_a_dict(tarea: "Tarea") -> dict:
     base = {
@@ -413,9 +400,7 @@ def _tarea_desde_dict(datos: dict, gestor: "GestorDeTareas") -> "Tarea":
     return tarea
 
 
-# =============================================================================
 # PATRON SINGLETON: GestorDeTareas
-# =============================================================================
 
 class GestorDeTareas:
     _instancia: Optional["GestorDeTareas"] = None
@@ -499,9 +484,7 @@ class GestorDeTareas:
         return True
 
 
-# =============================================================================
 # INTERFAZ DE CONSOLA
-# =============================================================================
 
 def pedir_fecha(mensaje: str) -> date:
     while True:
@@ -575,9 +558,7 @@ def listar(tareas: list) -> None:
         print(tarea)
 
 
-# -----------------------------------------------------------------------------
-# DETALLE---------------------------------------------------------
-# -----------------------------------------------------------------------------
+# DETALLE
 
 @encabezado("Detalle de tarea")
 def ver_detalle_tarea(gestor: GestorDeTareas) -> None:
@@ -641,7 +622,7 @@ def ver_detalle_tarea(gestor: GestorDeTareas) -> None:
     if isinstance(tarea, TareaRecurrente):
         fila_dato("Frecuencia:", c(f"cada {tarea.frecuencia_dias} días", Color.MAGENTA))
 
-    # Notas (solo tareas simples — el "cuerpo" que pedías ver)
+    # Notas (solo tareas simples, el "cuerpo")
     if isinstance(tarea, TareaSimple):
         print(c("│" + "─" * ancho + "│", Color.AZUL))
         fila_dato("Notas:", "")
@@ -738,9 +719,7 @@ def _guardar(gestor: GestorDeTareas) -> None:
     gestor.guardar()
 
 
-# =============================================================================
 # MAIN
-# =============================================================================
 
 def main() -> None:
     gestor = GestorDeTareas.obtener_instancia()
